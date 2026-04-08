@@ -61,6 +61,8 @@ jobs:
       EVEREST_CATALOG_IMAGE_NAME: 'openeverest-catalog'
       EVEREST_CATALOG_DEV_IMAGE_NAME: 'openeverest-catalog-dev'
       EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME: 'version-service-dev'
+      EVEREST_CTL_IMAGE_NAME: 'everestctl'
+      EVEREST_CTL_DEV_IMAGE_NAME: 'everestctl-dev'
     steps:
       - name: Enable /mnt (big volume) to be used by runner
         run: |
@@ -421,6 +423,60 @@ jobs:
           files: |
             dist/*
 
+      - name: CLI - setup Docker meta for everestctl (amd64)
+        if: matrix.arch == 'amd64'
+        id: everestctl_meta_amd64
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_DEV_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION }}-amd64
+            type=raw,value=latest-amd64
+            type=raw,value=${{ env.FLOATING_TAG }}-amd64,enable=${{ env.IS_RC == 0 }}
+
+      - name: CLI - setup Docker meta for everestctl (arm64)
+        if: matrix.arch == 'amd64'
+        id: everestctl_meta_arm64
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
+            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_DEV_IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ env.VERSION }}-arm64
+            type=raw,value=latest-arm64
+            type=raw,value=${{ env.FLOATING_TAG }}-arm64,enable=${{ env.IS_RC == 0 }}
+
+      - name: CLI - build and push everestctl image (amd64)
+        if: matrix.arch == 'amd64'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.everestctl
+          push: true
+          provenance: false
+          platforms: linux/amd64
+          tags: ${{ steps.everestctl_meta_amd64.outputs.tags }}
+          build-args: |
+            TARGETOS=linux
+            TARGETARCH=amd64
+
+      - name: CLI - build and push everestctl image (arm64)
+        if: matrix.arch == 'amd64'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.everestctl
+          push: true
+          provenance: false
+          platforms: linux/arm64
+          tags: ${{ steps.everestctl_meta_arm64.outputs.tags }}
+          build-args: |
+            TARGETOS=linux
+            TARGETARCH=arm64
+
       - name: Trigger Homebrew tap update
         if: env.IS_RC == 0
         run: |
@@ -461,11 +517,13 @@ jobs:
             BUNDLE_IMAGE="openeverest-operator-bundle-dev"
             CATALOG_IMAGE="openeverest-catalog-dev"
             EVEREST_IMAGE="openeverest-dev"
+            EVERESTCTL_IMAGE="everestctl-dev"
           else
             OPERATOR_IMAGE="openeverest-operator"
             BUNDLE_IMAGE="openeverest-operator-bundle"
             CATALOG_IMAGE="openeverest-catalog"
             EVEREST_IMAGE="openeverest"
+            EVERESTCTL_IMAGE="everestctl"
           fi
           
           # Operator - version tag
