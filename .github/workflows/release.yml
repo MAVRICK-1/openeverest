@@ -423,59 +423,27 @@ jobs:
           files: |
             dist/*
 
-      - name: CLI - setup Docker meta for everestctl (amd64)
-        if: matrix.arch == 'amd64'
-        id: everestctl_meta_amd64
+      - name: CLI - setup Docker meta for everestctl
+        id: everestctl_meta
         uses: docker/metadata-action@v5
         with:
           images: |
             ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
             ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_DEV_IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ env.VERSION }}-amd64
-            type=raw,value=latest-amd64
-            type=raw,value=${{ env.FLOATING_TAG }}-amd64,enable=${{ env.IS_RC == 0 }}
+            type=raw,value=${{ env.VERSION }}-${{ matrix.arch }}
+            type=raw,value=latest-${{ matrix.arch }}
+            type=raw,value=${{ env.FLOATING_TAG }}-${{ matrix.arch }},enable=${{ env.IS_RC == 0 }}
 
-      - name: CLI - setup Docker meta for everestctl (arm64)
-        if: matrix.arch == 'amd64'
-        id: everestctl_meta_arm64
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_IMAGE_NAME }},enable=${{ env.IS_RC == 0 }}
-            ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_DEV_IMAGE_NAME }}
-          tags: |
-            type=raw,value=${{ env.VERSION }}-arm64
-            type=raw,value=latest-arm64
-            type=raw,value=${{ env.FLOATING_TAG }}-arm64,enable=${{ env.IS_RC == 0 }}
-
-      - name: CLI - build and push everestctl image (amd64)
-        if: matrix.arch == 'amd64'
+      - name: CLI - build and push everestctl image
         uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile.everestctl
           push: true
           provenance: false
-          platforms: linux/amd64
-          tags: ${{ steps.everestctl_meta_amd64.outputs.tags }}
-          build-args: |
-            TARGETOS=linux
-            TARGETARCH=amd64
-
-      - name: CLI - build and push everestctl image (arm64)
-        if: matrix.arch == 'amd64'
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.everestctl
-          push: true
-          provenance: false
-          platforms: linux/arm64
-          tags: ${{ steps.everestctl_meta_arm64.outputs.tags }}
-          build-args: |
-            TARGETOS=linux
-            TARGETARCH=arm64
+          platforms: ${{ matrix.platform }}
+          tags: ${{ steps.everestctl_meta.outputs.tags }}
 
       - name: Trigger Homebrew tap update
         if: env.IS_RC == 0
@@ -582,4 +550,21 @@ jobs:
             docker buildx imagetools create -t $IMAGE_PREFIX/$EVEREST_IMAGE:$FLOATING_TAG \
               $IMAGE_PREFIX/$EVEREST_IMAGE:$FLOATING_TAG-amd64 \
               $IMAGE_PREFIX/$EVEREST_IMAGE:$FLOATING_TAG-arm64
+          fi
+          
+          # Everestctl - version tag
+          docker buildx imagetools create -t $IMAGE_PREFIX/$EVERESTCTL_IMAGE:$VERSION \
+            $IMAGE_PREFIX/$EVERESTCTL_IMAGE:$VERSION-amd64 \
+            $IMAGE_PREFIX/$EVERESTCTL_IMAGE:$VERSION-arm64
+          
+          # Everestctl - latest tag
+          docker buildx imagetools create -t $IMAGE_PREFIX/$EVERESTCTL_IMAGE:latest \
+            $IMAGE_PREFIX/$EVERESTCTL_IMAGE:latest-amd64 \
+            $IMAGE_PREFIX/$EVERESTCTL_IMAGE:latest-arm64
+          
+          # Everestctl - floating tag (only for releases)
+          if [[ "$IS_RC" != "true" ]]; then
+            docker buildx imagetools create -t $IMAGE_PREFIX/$EVERESTCTL_IMAGE:$FLOATING_TAG \
+              $IMAGE_PREFIX/$EVERESTCTL_IMAGE:$FLOATING_TAG-amd64 \
+              $IMAGE_PREFIX/$EVERESTCTL_IMAGE:$FLOATING_TAG-arm64
           fi
