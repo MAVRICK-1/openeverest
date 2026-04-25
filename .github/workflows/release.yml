@@ -223,6 +223,14 @@ jobs:
           subject-digest: ${{ steps.operator_push.outputs.digest }}
           push-to-registry: true
 
+      - name: Operator - attest openeverest-operator prod image
+        if: env.IS_RC == 0
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_IMAGE_NAME }}
+          subject-digest: ${{ steps.operator_push.outputs.digest }}
+          push-to-registry: true
+
       - name: Operator - build openeverest-operator-bundle image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
@@ -249,6 +257,14 @@ jobs:
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_BUNDLE_DEV_IMAGE_NAME }}
+          subject-digest: ${{ steps.bundle_push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Operator - attest openeverest-operator-bundle prod image
+        if: env.IS_RC == 0
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_OPERATOR_BUNDLE_IMAGE_NAME }}
           subject-digest: ${{ steps.bundle_push.outputs.digest }}
           push-to-registry: true
 
@@ -323,6 +339,14 @@ jobs:
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CATALOG_DEV_IMAGE_NAME }}
+          subject-digest: ${{ steps.catalog_push.outputs.digest }}
+          push-to-registry: true
+
+      - name: Catalog - attest prod image
+        if: env.IS_RC == 0
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CATALOG_IMAGE_NAME }}
           subject-digest: ${{ steps.catalog_push.outputs.digest }}
           push-to-registry: true
 
@@ -443,6 +467,14 @@ jobs:
           subject-digest: ${{ steps.everest_push.outputs.digest }}
           push-to-registry: true
 
+      - name: Everest - attest Everest prod image
+        if: env.IS_RC == 0
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_SERVER_IMAGE_NAME }}
+          subject-digest: ${{ steps.everest_push.outputs.digest }}
+          push-to-registry: true
+
       - name: CLI - build binaries
         if: matrix.arch == 'amd64'
         run: |
@@ -490,6 +522,14 @@ jobs:
         uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_DEV_IMAGE_NAME }}
+          subject-digest: ${{ steps.everestctl_push.outputs.digest }}
+          push-to-registry: true
+
+      - name: CLI - attest everestctl prod image
+        if: env.IS_RC == 0
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-name: ${{ env.IMAGE_PREFIX }}/${{ env.EVEREST_CTL_IMAGE_NAME }}
           subject-digest: ${{ steps.everestctl_push.outputs.digest }}
           push-to-registry: true
 
