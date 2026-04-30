@@ -38,6 +38,8 @@ jobs:
     permissions:
       contents: write
       packages: write
+      id-token: write
+      attestations: write
     
     env:
       TOOLS_PATH: "/opt/tools/bin"
@@ -64,13 +66,6 @@ jobs:
       EVEREST_VERSION_SERVICE_DEV_IMAGE_NAME: 'version-service-dev'
       EVEREST_CTL_IMAGE_NAME: 'everestctl'
       EVEREST_CTL_DEV_IMAGE_NAME: 'everestctl-dev'
-    permissions:
-      contents: write
-      packages: write
-      checks: write
-      pull-requests: write
-      id-token: write
-      attestations: write
     steps:
       - name: Enable /mnt (big volume) to be used by runner
         run: |
